@@ -104,6 +104,9 @@ dev.ipynb
 .vscode/
 
 # not ready
+data/
+MSCOCO14weights/
+weights/
 videos/
 templates/
 data/ssd_dataloader.py
