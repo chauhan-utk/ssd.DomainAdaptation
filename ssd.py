@@ -23,8 +23,8 @@ class SSD(nn.Module):
         extras: extra layers that feed to multibox loc and conf layers
         head: "multibox head" consists of loc and conf conv layers
     """
-
-    def __init__(self, phase, base, extras, head, num_classes):
+#CHANGE
+    def __init__(self, phase, base, extras, dmn, head, num_classes):
         super(SSD, self).__init__()
         self.phase = phase
         self.num_classes = num_classes
@@ -38,6 +38,9 @@ class SSD(nn.Module):
         # Layer learns to scale the l2 normalized features from conv4_3
         self.L2Norm = L2Norm(512, 20)
         self.extras = nn.ModuleList(extras)
+#CHANGE
+        self.GradReverse = GradReverse(1) #lambd
+        self.dmn = nn.ModuleList(dmn)
 
         self.loc = nn.ModuleList(head[0])
         self.conf = nn.ModuleList(head[1])
@@ -73,6 +76,9 @@ class SSD(nn.Module):
         for k in range(23):
             x = self.vgg[k](x)
 
+#CHANGE
+        d = self.GradReverse(x)
+
         s = self.L2Norm(x)
         sources.append(s)
 
@@ -86,6 +92,12 @@ class SSD(nn.Module):
             x = F.relu(v(x), inplace=True)
             if k % 2 == 1:
                 sources.append(x)
+
+#CHANGE
+        # apply domain classifier layers
+        for k, v in enumerate(self.dmn):
+            d = v(d)
+
 
         # apply multibox head to source layers
         for (x, l, c) in zip(sources, self.loc, self.conf):
@@ -101,10 +113,12 @@ class SSD(nn.Module):
                 self.priors.type(type(x.data))                  # default boxes
             )
         else:
+#CHANGE
             output = (
                 loc.view(loc.size(0), -1, 4),
                 conf.view(conf.size(0), -1, self.num_classes),
-                self.priors
+                self.priors,
+                d                                           # add domain output
             )
         return output
 
@@ -159,6 +173,16 @@ def add_extras(cfg, i, batch_norm=False):
         in_channels = v
     return layers
 
+#CHANGE
+def add_domain(cfg, i):
+    # add domain classifier layer
+    layers = []
+    in_channels = i
+    for k, v in enumerate(cfg):
+        layers += [nn.Linear(in_channels, cfg[k]), nn.Sigmoid()]
+        in_channels = v
+
+    return layers
 
 def multibox(vgg, extra_layers, cfg, num_classes):
     loc_layers = []
@@ -186,6 +210,11 @@ extras = {
     '300': [256, 'S', 512, 128, 'S', 256, 128, 256, 128, 256],
     '512': [],
 }
+#CHANGE
+domains = {
+    '300' : [1024, 1024, 1],
+    '512' : [],
+}
 mbox = {
     '300': [4, 6, 6, 6, 4, 4],  # number of boxes per feature map location
     '512': [],
@@ -200,6 +229,8 @@ def build_ssd(phase, size=300, num_classes=21):
         print("Error: Sorry only SSD300 is supported currently!")
         return
 
+#CHANGE
     return SSD(phase, *multibox(vgg(base[str(size)], 3),
                                 add_extras(extras[str(size)], 1024),
+                                add_domain(domains[str(size)], 1024),
                                 mbox[str(size)], num_classes), num_classes)

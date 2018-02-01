@@ -10,20 +10,20 @@ import torch.utils.data as data
 
 class commonDataset(data.Dataset):
     def __init__(self, VOCroot, train_sets, ssd_dim, means, coco_img, annFile ):
-        
-        vocData = VOCDetection(VOCroot, train_sets, 
-                               SSDAugmentation(ssd_dim, means), 
+
+        vocData = VOCDetection(VOCroot, train_sets,
+                               SSDAugmentation(ssd_dim, means),
                                AnnotationTransform())
-        cocoData = MSCOCODetection(image_root=coco_img, 
-                                   ann_root=annFile, 
-                                   transform=SSDAugmentation(ssd_dim, means), 
+        cocoData = MSCOCODetection(image_root=coco_img,
+                                   ann_root=annFile,
+                                   transform=SSDAugmentation(ssd_dim, means),
                                    target_transform=COCOAnnotationTransform())
         self.vocLen = len(vocData)
         self.cocoLen = len(cocoData)
-    
+
     def __len__(self):
         return self.vocLen+self.cocoLen
-    
+
     def __getitem__(self, index):
         idx = index-1
         if idx in range(self.vocLen):

@@ -55,7 +55,9 @@ class MultiBoxLoss(nn.Module):
             ground_truth (tensor): Ground truth boxes and labels for a batch,
                 shape: [batch_size,num_objs,5] (last idx is the label).
         """
-        loc_data, conf_data, priors = predictions
+#CHANGE
+        loc_data, conf_data, priors, domain = predictions
+
         num = loc_data.size(0)
         priors = priors[:loc_data.size(1), :]
         num_priors = (priors.size(0))
@@ -65,8 +67,11 @@ class MultiBoxLoss(nn.Module):
         loc_t = torch.Tensor(num, num_priors, 4)
         conf_t = torch.LongTensor(num, num_priors)
         for idx in range(num):
-            truths = targets[idx][:, :-1].data
-            labels = targets[idx][:, -1].data
+#CHANGE
+            truths = targets[idx][:, :-2].data
+            labels = targets[idx][:, -2].data
+            DOMAIN = targets[idx][:, -1].data
+
             defaults = priors.data
             match(self.threshold, truths, defaults, self.variance, labels,
                   loc_t, conf_t, idx)
@@ -86,6 +91,10 @@ class MultiBoxLoss(nn.Module):
         loc_p = loc_data[pos_idx].view(-1, 4)
         loc_t = loc_t[pos_idx].view(-1, 4)
         loss_l = F.smooth_l1_loss(loc_p, loc_t, size_average=False)
+
+    #CHANGE
+        # https://stackoverflow.com/questions/45793856/binary-classification-with-softmax
+        loss_d = F.binary_cross_entropy(domain, DOMAIN, size_average=False)
 
         # Compute max conf across batch for hard negative mining
         batch_conf = conf_data.view(-1, self.num_classes)
@@ -113,4 +122,7 @@ class MultiBoxLoss(nn.Module):
         N = num_pos.data.sum()
         loss_l /= N
         loss_c /= N
-        return loss_l, loss_c
+
+    #CHANGE
+        loss_d /= N
+        return loss_l, loss_c, loss_d
