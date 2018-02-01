@@ -96,6 +96,7 @@ class SSD(nn.Module):
 #CHANGE
         # apply domain classifier layers
         for k, v in enumerate(self.dmn):
+            print(d.size())
             d = v(d)
 
 
@@ -184,7 +185,8 @@ def add_domain(cfg, i):
 
     return layers
 
-def multibox(vgg, extra_layers, cfg, num_classes):
+#CHANGE
+def multibox(vgg, extra_layers, dmn, cfg, num_classes):
     loc_layers = []
     conf_layers = []
     vgg_source = [24, -2]
@@ -198,7 +200,8 @@ def multibox(vgg, extra_layers, cfg, num_classes):
                                  * 4, kernel_size=3, padding=1)]
         conf_layers += [nn.Conv2d(v.out_channels, cfg[k]
                                   * num_classes, kernel_size=3, padding=1)]
-    return vgg, extra_layers, (loc_layers, conf_layers)
+#CHANGE
+    return vgg, extra_layers, dmn, (loc_layers, conf_layers)
 
 
 base = {

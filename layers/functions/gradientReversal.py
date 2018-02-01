@@ -9,11 +9,11 @@ class GradReverse(Function):
         self.lambd = lambd
 
     @staticmethod
-    def forward(self, x):
+    def forward(x):
         return x.view_as(x)
 
     @staticmethod
-    def backward(self, grad_output):
+    def backward(grad_output):
         return (grad_output * -self.lambd)
 
 def grad_reverse(x, lambd):
