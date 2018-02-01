@@ -1,7 +1,7 @@
 # ssd.DomainAdaptation
 
 
-Basic git commands:
+## Basic git commands:
 - git fetch : get remote commits to local repo
 - git pull <repo> <branch-name> e.g. git pull origin master : get the commits from remote branch to current branch
 - git branch -a : list all branches including remote branches
@@ -12,5 +12,7 @@ Basic git commands:
   - git add "*.py" : add all python files to staging area
   
 
-File list and their intentions:
+## File list and their intentions:
 - commonData.py: dataloader for common data
+
+Create seperate branches for different approaches after the dataloader file is made and tested.
