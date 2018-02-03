@@ -22,13 +22,14 @@ def str2bool(v):
 #CHANGE
 cocoimgPath = "/new_data/gpu/utkrsh/coco/images/train2014/"
 annFilePath = "/new_data/gpu/utkrsh/coco/annotations/instances_train2014.json"
-RESUME = None # change to saved model file path
-START_ITER = 1
+RESUME = "./weights/ssd300_0712_COCO14_4000_run2_BCELoss.pth" # change to saved model file path
+START_ITER = 4001
 CUDA = True
 VOCroot = "/users/gpu/utkrsh/data/VOCdevkit/"
 SAVE_FOLDER = 'weights/'
-BATCH_SIZE = 64
+BATCH_SIZE = 16
 NUM_WORKERS = 4
+ITERATIONS = 120000
 
 parser = argparse.ArgumentParser(description='Single Shot MultiBox Detector Training')
 parser.add_argument('--version', default='v2', help='conv11_2(v2) or pool6(v1) as last layer')
@@ -37,7 +38,7 @@ parser.add_argument('--jaccard_threshold', default=0.5, type=float, help='Min Ja
 parser.add_argument('--batch_size', default=BATCH_SIZE, type=int, help='Batch size for training')
 parser.add_argument('--resume', default=RESUME, type=str, help='Resume from checkpoint')
 parser.add_argument('--num_workers', default=NUM_WORKERS, type=int, help='Number of workers used in dataloading')
-parser.add_argument('--iterations', default=120000, type=int, help='Number of training iterations')
+parser.add_argument('--iterations', default=ITERATIONS, type=int, help='Number of training iterations')
 parser.add_argument('--start_iter', default=START_ITER, type=int, help='Begin counting iterations starting from this value (should be used with resume)')
 parser.add_argument('--cuda', default=CUDA, type=str2bool, help='Use cuda to train model')
 parser.add_argument('--lr', '--learning-rate', default=1e-3, type=float, help='initial learning rate')
@@ -73,7 +74,7 @@ accum_batch_size = 32
 iter_size = accum_batch_size / batch_size
 max_iter = 120000
 weight_decay = 0.0005
-stepvalues = (80000, 100000, 120000)
+stepvalues = (40000, 80000, 100000, 120000)
 gamma = 0.1
 momentum = 0.9
 
@@ -84,9 +85,11 @@ if args.visdom:
 ssd_net = build_ssd('train', 300, num_classes)
 net = ssd_net
 
+'''
 if args.cuda:
     net = torch.nn.DataParallel(ssd_net)
     cudnn.benchmark = True
+'''
 
 if args.resume:
     print('Resuming training, loading {}...'.format(args.resume))
@@ -165,7 +168,7 @@ def train():
             )
         )
     batch_iterator = None
-    data_loader = data.DataLoader(dataset, batch_size, num_workers=args.num_workers,
+    data_loader = data.DataLoader(dataset, args.batch_size, num_workers=args.num_workers,
                                   shuffle=True, collate_fn=detection_collate, pin_memory=args.cuda)
     for iteration in range(args.start_iter, max_iter):
         if (not batch_iterator) or (iteration % epoch_size == 0):

@@ -187,7 +187,6 @@ def add_domain(cfg, i):
     for k, v in enumerate(cfg):
         layers += [nn.Linear(in_channels, cfg[k]), nn.Sigmoid()]
         in_channels = v
-
     return layers
 
 #CHANGE

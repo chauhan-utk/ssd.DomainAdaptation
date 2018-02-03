@@ -102,7 +102,7 @@ class MultiBoxLoss(nn.Module):
 
     #CHANGE
         # https://stackoverflow.com/questions/45793856/binary-classification-with-softmax
-        print("domain: ", domain.size(), " DOMAIN: ", DOMAIN.size())
+        # print("domain: ", domain.size(), " DOMAIN: ", DOMAIN.size())
         loss_d = F.binary_cross_entropy(domain, DOMAIN, size_average=True)
 
         # Compute max conf across batch for hard negative mining
