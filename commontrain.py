@@ -4,32 +4,42 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.backends.cudnn as cudnn
 import torch.nn.init as init
+import argparse
 from torch.autograd import Variable
 import torch.utils.data as data
-from data import v2, v1, AnnotationTransform, VOCDetection, detection_collate, VOCroot, VOC_CLASSES
+#CHANGE
+from data import v2, v1, AnnotationTransform, VOCDetection, detection_collate, VOC_CLASSES
 from utils.augmentations import SSDAugmentation
 from layers.modules import MultiBoxLoss
 from ssd import build_ssd
 import numpy as np
 import time
+from commonData import commonDataset
 
 def str2bool(v):
     return v.lower() in ("yes", "true", "t", "1")
 
 #CHANGE
-cocoimgPath = None
-annFilePath = None
+cocoimgPath = "/new_data/gpu/utkrsh/coco/images/train2014/"
+annFilePath = "/new_data/gpu/utkrsh/coco/annotations/instances_train2014.json"
+RESUME = None # change to saved model file path
+START_ITER = 1
+CUDA = True
+VOCroot = "/users/gpu/utkrsh/data/VOCdevkit/"
+SAVE_FOLDER = 'weights/'
+BATCH_SIZE = 64
+NUM_WORKERS = 4
 
 parser = argparse.ArgumentParser(description='Single Shot MultiBox Detector Training')
 parser.add_argument('--version', default='v2', help='conv11_2(v2) or pool6(v1) as last layer')
 parser.add_argument('--basenet', default='vgg16_reducedfc.pth', help='pretrained base model')
 parser.add_argument('--jaccard_threshold', default=0.5, type=float, help='Min Jaccard index for matching')
-parser.add_argument('--batch_size', default=32, type=int, help='Batch size for training')
-parser.add_argument('--resume', default=None, type=str, help='Resume from checkpoint')
-parser.add_argument('--num_workers', default=0, type=int, help='Number of workers used in dataloading')
+parser.add_argument('--batch_size', default=BATCH_SIZE, type=int, help='Batch size for training')
+parser.add_argument('--resume', default=RESUME, type=str, help='Resume from checkpoint')
+parser.add_argument('--num_workers', default=NUM_WORKERS, type=int, help='Number of workers used in dataloading')
 parser.add_argument('--iterations', default=120000, type=int, help='Number of training iterations')
-parser.add_argument('--start_iter', default=0, type=int, help='Begin counting iterations starting from this value (should be used with resume)')
-parser.add_argument('--cuda', default=True, type=str2bool, help='Use cuda to train model')
+parser.add_argument('--start_iter', default=START_ITER, type=int, help='Begin counting iterations starting from this value (should be used with resume)')
+parser.add_argument('--cuda', default=CUDA, type=str2bool, help='Use cuda to train model')
 parser.add_argument('--lr', '--learning-rate', default=1e-3, type=float, help='initial learning rate')
 parser.add_argument('--momentum', default=0.9, type=float, help='momentum')
 parser.add_argument('--weight_decay', default=5e-4, type=float, help='Weight decay for SGD')
@@ -37,9 +47,9 @@ parser.add_argument('--gamma', default=0.1, type=float, help='Gamma update for S
 parser.add_argument('--log_iters', default=False, type=bool, help='Print the loss at each iteration')
 parser.add_argument('--visdom', default=False, type=str2bool, help='Use visdom to for loss visualization')
 parser.add_argument('--send_images_to_visdom', type=str2bool, default=False, help='Sample a random image from each 10th batch, send it to visdom after augmentations step')
-parser.add_argument('--save_folder', default='weights/', help='Location to save checkpoint models')
+parser.add_argument('--save_folder', default=SAVE_FOLDER, help='Location to save checkpoint models')
 parser.add_argument('--cocoimg', default=cocoimgPath, help='Location for COCO14 dataset images')
-parsert.add_argument('--annFile', default=annFilePath, help='Location for annotations for COCO14 images')
+parser.add_argument('--annFile', default=annFilePath, help='Location for annotations for COCO14 images')
 parser.add_argument('--voc_root', default=VOCroot, help='Location of VOC root directory')
 args = parser.parse_args()
 
@@ -53,7 +63,7 @@ cfg = (v1, v2)[args.version == 'v2']
 if not os.path.exists(args.save_folder):
     os.mkdir(args.save_folder)
 
-train_sets = [('2007', 'trainval'), ('2012', 'trainval')]
+train_sets = [('2007', 'trainval')]
 # train_sets = 'train'
 ssd_dim = 300  # only support 300 now
 means = (104, 117, 123)  # only support voc now
@@ -120,11 +130,12 @@ def train():
     loc_loss = 0  # epoch
     conf_loss = 0
     epoch = 0
+    file = open(args.save_folder + "run.txt", "a+")
     print('Loading Dataset...')
 
 #CHANGE
     dataset = commonDataset(args.voc_root, train_sets, ssd_dim, means,
-                coco_img, annFile)
+                args.cocoimg, args.annFile)
     #dataset = VOCDetection(args.voc_root, train_sets, SSDAugmentation(
     #    ssd_dim, means), AnnotationTransform())
 
@@ -155,7 +166,7 @@ def train():
         )
     batch_iterator = None
     data_loader = data.DataLoader(dataset, batch_size, num_workers=args.num_workers,
-                                  shuffle=True, collate_fn=detection_collate, pin_memory=True)
+                                  shuffle=True, collate_fn=detection_collate, pin_memory=args.cuda)
     for iteration in range(args.start_iter, max_iter):
         if (not batch_iterator) or (iteration % epoch_size == 0):
             # create batch iterator
@@ -201,7 +212,11 @@ def train():
         conf_loss += loss_c.data[0]
         if iteration % 10 == 0:
             print('Timer: %.4f sec.' % (t1 - t0))
-            print('iter ' + repr(iteration) + ' || Loss: %.4f ||' % (loss.data[0]), end=' ')
+            #print('iter ' + repr(iteration) + ' || Loss: %.4f ||' % (loss.data[0]), end=' ')
+            print("iter : "+repr(iteration)+" || loc: %.4f || conf: %.4f || dom: %.4f || loss: %.4f ||\n" %
+                       (loss_l.data[0], loss_c.data[0], loss_d.data[0], loss.data[0]) )
+            file.write("iter : "+repr(iteration)+" || loc: %.4f || conf: %.4f || dom: %.4f || loss: %.4f ||\n" %
+                       (loss_l.data[0], loss_c.data[0], loss_d.data[0], loss.data[0]) )
             if args.visdom and args.send_images_to_visdom:
                 random_batch_index = np.random.randint(images.size(0))
                 viz.image(images.data[random_batch_index].cpu().numpy())
@@ -224,9 +239,10 @@ def train():
                 )
         if iteration % 2000 == 0:
             print('Saving state, iter:', iteration)
-            torch.save(ssd_net.state_dict(), 'weights/ssd300_0712_' +
+            torch.save(ssd_net.state_dict(), args.save_folder+'ssd300_0712_COCO14_' +
                        repr(iteration) + '.pth')
     torch.save(ssd_net.state_dict(), args.save_folder + '' + args.version + '.pth')
+    file.close()
 
 
 def adjust_learning_rate(optimizer, gamma, step):

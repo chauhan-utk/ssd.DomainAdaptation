@@ -66,11 +66,14 @@ class MultiBoxLoss(nn.Module):
         # match priors (default boxes) and ground truth boxes
         loc_t = torch.Tensor(num, num_priors, 4)
         conf_t = torch.LongTensor(num, num_priors)
+#CHANGE        
+        DOMAIN = torch.Tensor(domain.size())
+        
         for idx in range(num):
 #CHANGE
             truths = targets[idx][:, :-2].data
             labels = targets[idx][:, -2].data
-            DOMAIN = targets[idx][:, -1].data
+            DOMAIN[idx] = targets[idx][0, -1].data #all the bbox are from same image
 
             defaults = priors.data
             match(self.threshold, truths, defaults, self.variance, labels,
@@ -78,10 +81,15 @@ class MultiBoxLoss(nn.Module):
         if self.use_gpu:
             loc_t = loc_t.cuda()
             conf_t = conf_t.cuda()
+#CHANGE
+            DOMAIN = DOMAIN.cuda()
+    
         # wrap targets
         loc_t = Variable(loc_t, requires_grad=False)
         conf_t = Variable(conf_t, requires_grad=False)
-
+#CHANGE
+        DOMAIN = Variable(DOMAIN, requires_grad=False)
+    
         pos = conf_t > 0
         num_pos = pos.sum(keepdim=True)
 
@@ -94,7 +102,8 @@ class MultiBoxLoss(nn.Module):
 
     #CHANGE
         # https://stackoverflow.com/questions/45793856/binary-classification-with-softmax
-        loss_d = F.binary_cross_entropy(domain, DOMAIN, size_average=False)
+        print("domain: ", domain.size(), " DOMAIN: ", DOMAIN.size())
+        loss_d = F.binary_cross_entropy(domain, DOMAIN, size_average=True)
 
         # Compute max conf across batch for hard negative mining
         batch_conf = conf_data.view(-1, self.num_classes)

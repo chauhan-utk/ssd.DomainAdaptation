@@ -5,6 +5,7 @@ from torch.autograd import Variable
 from layers import *
 from data import v2
 import os
+from grl1 import grad_reverse
 
 
 class SSD(nn.Module):
@@ -39,7 +40,7 @@ class SSD(nn.Module):
         self.L2Norm = L2Norm(512, 20)
         self.extras = nn.ModuleList(extras)
 #CHANGE
-        self.GradReverse = GradReverse(1) #lambd
+        #self.GradReverse = GradReverse(1) #lambd
         self.dmn = nn.ModuleList(dmn)
 
         self.loc = nn.ModuleList(head[0])
@@ -77,7 +78,8 @@ class SSD(nn.Module):
             x = self.vgg[k](x)
 
 #CHANGE
-        d = self.GradReverse(x)
+        #d = self.GradReverse(x)
+        d = x
 
         s = self.L2Norm(x)
         sources.append(s)
@@ -95,8 +97,11 @@ class SSD(nn.Module):
 
 #CHANGE
         # apply domain classifier layers
+        # d size [batch_size, 512, 38, 38]
+        # https://github.com/pytorch/vision/blob/c84aa9989f5256480487cafe280b521e50ddd113/torchvision/models/vgg.py#L43
+        d = d.view(d.size(0),-1)
+        d = grad_reverse(1,d)
         for k, v in enumerate(self.dmn):
-            print(d.size())
             d = v(d)
 
 
@@ -201,7 +206,10 @@ def multibox(vgg, extra_layers, dmn, cfg, num_classes):
         conf_layers += [nn.Conv2d(v.out_channels, cfg[k]
                                   * num_classes, kernel_size=3, padding=1)]
 #CHANGE
-    return vgg, extra_layers, dmn, (loc_layers, conf_layers)
+    domain_layers = []
+    domain_layers += [nn.Linear(vgg[vgg_source[0]].out_channels * 38 * 38, dmn[0].in_features), nn.Sigmoid()]
+    domain_layers += dmn
+    return vgg, extra_layers, domain_layers, (loc_layers, conf_layers)
 
 
 base = {
@@ -215,7 +223,7 @@ extras = {
 }
 #CHANGE
 domains = {
-    '300' : [1024, 1024, 1],
+    '300' : [64, 64, 1],
     '512' : [],
 }
 mbox = {
@@ -235,5 +243,5 @@ def build_ssd(phase, size=300, num_classes=21):
 #CHANGE
     return SSD(phase, *multibox(vgg(base[str(size)], 3),
                                 add_extras(extras[str(size)], 1024),
-                                add_domain(domains[str(size)], 1024),
+                                add_domain(domains[str(size)], 128),
                                 mbox[str(size)], num_classes), num_classes)
