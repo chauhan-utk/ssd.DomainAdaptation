@@ -20,6 +20,13 @@ Check this [link](https://stackoverflow.com/questions/4114095/how-to-revert-git-
 
 Another tutorial [link](https://github.com/blog/2019-how-to-undo-almost-anything-with-git) by GitHub to undo stuff using ```git```.
 
+If want to overwrite local files with remote:
+```Shell
+git fetch --all
+git reset --hard origin/master
+git pull origin master
+```
+
 
 ## File list and their intentions:
 - commonData.py: dataloader for common data

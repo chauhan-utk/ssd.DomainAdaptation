@@ -5,6 +5,7 @@ import numpy as np
 import torch
 from torch.autograd import Variable
 import torch.utils.data as data
+from random import shuffle
 
 
 
@@ -21,19 +22,22 @@ class commonDataset(data.Dataset):
                                    target_transform=COCOAnnotationTransform())
         self.vocLen = len(self.vocData)
         self.cocoLen = len(self.cocoData)
+        self.commonElements = [(x,y) for x,y in zip(list(range(self.vocLen)), [0]*self.vocLen)]
+        tmp = [(x,y) for x,y in zip(list(range(self.cocoLen)), [1]*self.cocoLen)]
+        self.commonElements = self.commonElements + tmp
+        shuffle(self.commonElements)
 
     def __len__(self):
-        return self.vocLen+self.cocoLen
+        return len(self.commonElements)
 
     def __getitem__(self, index):
-        idx = index-1
-        if idx in range(self.vocLen):
-            img, targets = self.vocData[idx]
+        indx, dataset = self.commonElements[index]
+        if dataset == 0:
+            img, targets = self.vocData[indx]
             dmn_idx = np.zeros(((int)(targets.size/5),1))
             targets = np.hstack((targets,dmn_idx))
             return img,targets
         else:
-            indx = idx - self.vocLen
             img, targets = self.cocoData[indx]
             dmn_idx = np.ones(((int)(targets.size/5),1))
             targets = np.hstack((targets,dmn_idx))
