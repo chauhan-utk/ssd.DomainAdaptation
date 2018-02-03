@@ -184,10 +184,10 @@ def add_domain(cfg, i):
     # add domain classifier layer
     layers = []
     in_channels = i
-    for k in range(len(cfg)-1):
-        layers += [nn.Linear(in_channels, cfg[k]), nn.PReLU()]
-        in_channels = cfg[k]
-    layers+=[nn.Linear(in_channels, cfg[-1])]
+    for k, v in enumerate(cfg):
+        layers += [nn.Linear(in_channels, cfg[k]), nn.Sigmoid()]
+        in_channels = v
+
     return layers
 
 #CHANGE
