@@ -4,6 +4,7 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 from data import v2 as cfg
 from ..box_utils import match, log_sum_exp
+import sys
 
 class MultiBoxLoss(nn.Module):
     """SSD Weighted Loss Function
@@ -102,8 +103,13 @@ class MultiBoxLoss(nn.Module):
 
     #CHANGE
         # https://stackoverflow.com/questions/45793856/binary-classification-with-softmax
-        print("domain: ", domain.size(), " DOMAIN: ", DOMAIN.size())
-        loss_d = F.binary_cross_entropy(domain, DOMAIN, size_average=True)
+        try:
+            #loss_d = F.binary_cross_entropy(domain, DOMAIN, size_average=True)
+            loss_d = F.binary_cross_entropy_with_logits(domain, DOMAIN, size_average=True)
+        except:
+            print(domain)
+            print(DOMAIN)
+            sys.exit("Some error")
 
         # Compute max conf across batch for hard negative mining
         batch_conf = conf_data.view(-1, self.num_classes)
