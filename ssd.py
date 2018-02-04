@@ -5,7 +5,7 @@ from torch.autograd import Variable
 from layers import *
 from data import v2
 import os
-from grl1 import grad_reverse
+from grl1 import GradReverse
 
 
 class SSD(nn.Module):
@@ -100,7 +100,7 @@ class SSD(nn.Module):
         # d size [batch_size, 512, 38, 38]
         # https://github.com/pytorch/vision/blob/c84aa9989f5256480487cafe280b521e50ddd113/torchvision/models/vgg.py#L43
         d = d.view(d.size(0),-1)
-        d = grad_reverse(1,d)
+        d = GradReverse.apply(d)
         for k, v in enumerate(self.dmn):
             d = v(d)
 
