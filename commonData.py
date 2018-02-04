@@ -24,7 +24,7 @@ class commonDataset(data.Dataset):
         self.cocoLen = len(self.cocoData)
         self.commonElements = [(x,y) for x,y in zip(list(range(self.vocLen)), [0]*self.vocLen)]
         tmp = [(x,y) for x,y in zip(list(range(self.cocoLen)), [1]*self.cocoLen)]
-        self.commonElements = self.commonElements + tmp
+        self.commonElements = self.commonElements + self.commonElements + self.commonElements + self.commonElements + self.commonElements + self.commonElements + tmp
         shuffle(self.commonElements)
 
     def __len__(self):
