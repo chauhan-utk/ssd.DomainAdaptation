@@ -1,14 +1,10 @@
 from torch.autograd import Function
 
 class GradReverse(Function):
-    def __init__(self, lambd):
-        self.lambd = lambd
-
-    def forward(self, x):
+    @staticmethod
+    def forward(ctx, x):
         return x.view_as(x)
-
-    def backward(self, grad_output):
-        return (grad_output * -self.lambd)
-
-def grad_reverse(lambd, x):
-    return GradReverse(lambd)(x)
+    @staticmethod
+    def backward(ctx, grad_output):
+        #grad_output = grad_output * -1
+        return grad_output.neg()
