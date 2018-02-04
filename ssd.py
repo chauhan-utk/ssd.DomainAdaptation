@@ -99,6 +99,7 @@ class SSD(nn.Module):
         # apply domain classifier layers
         # d size [batch_size, 512, 38, 38]
         # https://github.com/pytorch/vision/blob/c84aa9989f5256480487cafe280b521e50ddd113/torchvision/models/vgg.py#L43
+        # https://github.com/pytorch/pytorch/blob/master/torch/autograd/gradcheck.py
         d = d.view(d.size(0),-1)
         d = GradReverse.apply(d)
         for k, v in enumerate(self.dmn):
