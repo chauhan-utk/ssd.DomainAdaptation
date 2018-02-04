@@ -32,3 +32,5 @@ git pull origin master
 - commonData.py: dataloader for common data
 
 Create seperate branches for different approaches after the dataloader file is made and tested.
+
+vgg lower layers give value NaN initially. Don't know if this is good or bad. Check [this](https://github.com/tensorflow/tensorflow/issues/3199) and [this](https://stackoverflow.com/questions/33712178/tensorflow-nan-bug?newreg=c7e31a867765444280ba3ca50b657a07) link for more information on this NaN values issue.
