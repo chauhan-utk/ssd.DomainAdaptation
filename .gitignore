@@ -104,6 +104,8 @@ dev.ipynb
 .vscode/
 
 # not ready
+.logs/
+RESULTS/
 MSCOCO14weights/
 weights/
 videos/
