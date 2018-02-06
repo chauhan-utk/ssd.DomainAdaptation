@@ -106,8 +106,8 @@ dev.ipynb
 # not ready
 MSCOCO14weights/
 weights/
-videos/
-templates/
+RESULTS/
+.logs/
 data/ssd_dataloader.py
 data/datasets/
 doc/visualize.py
