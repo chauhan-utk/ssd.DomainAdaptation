@@ -107,7 +107,6 @@ dev.ipynb
 MSCOCO14weights/
 weights/
 RESULTS/
-.logs/
 data/ssd_dataloader.py
 data/datasets/
 doc/visualize.py
