@@ -15,7 +15,7 @@ from ssd import build_ssd
 
 TRAINED_MODEL = "MSCOCO14weights/ssd300_COCO_118000_load.pth"
 EVAL = "eval/vocAndcoco_trainonboth_result_voc/"
-CUDA = False
+CUDA = True
 
 parser = argparse.ArgumentParser(description='Single Shot MultiBox Detection')
 parser.add_argument('--trained_model', default=TRAINED_MODEL,
