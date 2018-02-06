@@ -13,14 +13,18 @@ from data import AnnotationTransform, VOCDetection, BaseTransform, VOC_CLASSES
 import torch.utils.data as data
 from ssd import build_ssd
 
+TRAINED_MODEL = "MSCOCO14weights/ssd300_COCO_118000_load.pth"
+EVAL = "eval/vocAndcoco_trainonboth_result_voc/"
+CUDA = False
+
 parser = argparse.ArgumentParser(description='Single Shot MultiBox Detection')
-parser.add_argument('--trained_model', default='weights/ssd300_0712_6000.pth',
+parser.add_argument('--trained_model', default=TRAINED_MODEL,
                     type=str, help='Trained state_dict file path to open')
-parser.add_argument('--save_folder', default='eval/', type=str,
+parser.add_argument('--save_folder', default=EVAL, type=str,
                     help='Dir to save results')
 parser.add_argument('--visual_threshold', default=0.6, type=float,
                     help='Final confidence threshold')
-parser.add_argument('--cuda', default=False, type=bool,
+parser.add_argument('--cuda', default=CUDA, type=bool,
                     help='Use cuda to train model')
 parser.add_argument('--voc_root', default=VOCroot, help='Location of VOC root directory')
 
@@ -34,40 +38,53 @@ def test_net(save_folder, net, cuda, testset, transform, thresh):
     # dump predictions and assoc. ground truth to text file for now
     filename = save_folder+'test1.txt'
     num_images = len(testset)
-    for i in range(num_images):
+    for i in range(num_images // 2):
         print('Testing image {:d}/{:d}....'.format(i+1, num_images))
         img = testset.pull_image(i)
         img_id, annotation = testset.pull_anno(i)
         x = torch.from_numpy(transform(img)[0]).permute(2, 0, 1)
         x = Variable(x.unsqueeze(0))
+        
+        '''
 
         with open(filename, mode='a') as f:
             f.write('\nGROUND TRUTH FOR: '+img_id+'\n')
             for box in annotation:
                 f.write('label: '+' || '.join(str(b) for b in box)+'\n')
+        print('\nGROUND TRUTH FOR: '+img_id+'\n')
+        for box in annotation:
+            print('label: '+' || '.join(str(b) for b in box)+'\n')
+            
+        '''
         if cuda:
             x = x.cuda()
 
         y = net(x)      # forward pass
         detections = y.data
+        # print("detections size: ", detections.size())
         # scale each detection back up to the image
         scale = torch.Tensor([img.shape[1], img.shape[0],
                              img.shape[1], img.shape[0]])
         pred_num = 0
         for i in range(detections.size(1)):
             j = 0
-            while detections[0, i, j, 0] >= 0.6:
+            while detections[0, i, j, 0] >= 0.2:
+                '''
                 if pred_num == 0:
                     with open(filename, mode='a') as f:
                         f.write('PREDICTIONS: '+'\n')
+                '''
                 score = detections[0, i, j, 0]
                 label_name = labelmap[i-1]
                 pt = (detections[0, i, j, 1:]*scale).cpu().numpy()
                 coords = (pt[0], pt[1], pt[2], pt[3])
                 pred_num += 1
+                '''
                 with open(filename, mode='a') as f:
                     f.write(str(pred_num)+' label: '+label_name+' score: ' +
                             str(score) + ' '+' || '.join(str(c) for c in coords) + '\n')
+                '''
+                print(str(pred_num)+' label: '+label_name+' score: ' + str(score) + ' '+' || '.join(str(c) for c in coords) + '\n')
                 j += 1
 
 
