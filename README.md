@@ -18,6 +18,8 @@ Check this [link](https://stackoverflow.com/questions/4114095/how-to-revert-git-
 - ```git revert HEAD~2``` - go back two commits.
 - ```git revert <sha1-1>..<sha1-3>``` - go back to the previous commit ranges.
 
+Check if ```git pull``` is needed: ```git remote -v update```
+
 Another tutorial [link](https://github.com/blog/2019-how-to-undo-almost-anything-with-git) by GitHub to undo stuff using ```git```.
 
 If want to overwrite local files with remote:
