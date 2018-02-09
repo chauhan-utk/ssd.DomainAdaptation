@@ -1,9 +1,11 @@
+# -*- coding: utf-8 -*-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
 from data import v2 as cfg
 from ..box_utils import match, log_sum_exp
+
 
 class MultiBoxLoss(nn.Module):
     """SSD Weighted Loss Function
@@ -78,7 +80,7 @@ class MultiBoxLoss(nn.Module):
         conf_t = Variable(conf_t, requires_grad=False)
 
         pos = conf_t > 0
-        num_pos = pos.sum(keepdim=True)
+        num_pos = pos.sum(dim=1, keepdim=True)
 
         # Localization Loss (Smooth L1)
         # Shape: [batch,num_priors,4]
