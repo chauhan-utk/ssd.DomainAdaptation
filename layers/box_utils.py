@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import torch
 
 def point_form(boxes):
@@ -83,6 +84,8 @@ def match(threshold, truths, priors, variances, labels, loc_t, conf_t, idx):
     Return:
         The matched indices corresponding to 1)location and 2)confidence preds.
     """
+    
+    # jaccard index
     overlaps = jaccard(
         truths,
         point_form(priors)

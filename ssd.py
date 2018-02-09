@@ -5,8 +5,6 @@ from torch.autograd import Variable
 from layers import *
 from data import v2
 import os
-from grl1 import GradReverse
-
 
 class SSD(nn.Module):
     """Single Shot Multibox Architecture
@@ -51,7 +49,7 @@ class SSD(nn.Module):
         """Applies network layers and ops on input image(s) x.
 
         Args:
-            x: input image or batch of images. Shape: [batch,3*batch,300,300].
+            x: input image or batch of images. Shape: [batch,3,300,300].
 
         Return:
             Depending on phase:
@@ -113,7 +111,8 @@ class SSD(nn.Module):
         other, ext = os.path.splitext(base_file)
         if ext == '.pkl' or '.pth':
             print('Loading weights into state dict...')
-            self.load_state_dict(torch.load(base_file, map_location=lambda storage, loc: storage))
+            self.load_state_dict(torch.load(base_file,
+                                 map_location=lambda storage, loc: storage))
             print('Finished!')
         else:
             print('Sorry only .pth and .pkl files supported.')
@@ -186,11 +185,7 @@ extras = {
     '300': [256, 'S', 512, 128, 'S', 256, 128, 256, 128, 256],
     '512': [],
 }
-#CHANGE
-domains = {
-    '300' : [64, 64, 1],
-    '512' : [],
-}
+
 mbox = {
     '300': [4, 6, 6, 6, 4, 4],  # number of boxes per feature map location
     '512': [],
@@ -204,6 +199,7 @@ def build_ssd(phase, size=300, num_classes=21):
     if size != 300:
         print("Error: Sorry only SSD300 is supported currently!")
         return
-    return SSD(phase, *multibox(vgg(base[str(size)], 3),
-                                add_extras(extras[str(size)], 1024),
-                                mbox[str(size)], num_classes), num_classes)
+    base_, extras_, head_ = multibox(vgg(base[str(size)], 3),
+                                     add_extras(extras[str(size)], 1024),
+                                     mbox[str(size)], num_classes)
+    return SSD(phase, base_, extras_, head_, num_classes)
