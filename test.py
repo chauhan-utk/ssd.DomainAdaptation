@@ -13,16 +13,16 @@ from data import AnnotationTransform, VOCDetection, BaseTransform, VOC_CLASSES
 import torch.utils.data as data
 from ssd import build_ssd
 
-TRAINED_MODEL = 'weights/ssd300_0712_6000.pth'
-SAVE_FOLDER = '.logs/'
+TRAINED_MODEL = 'weights/ssd300_0712_bs_78000.pth'
+SAVE_FOLDER = '.logs/run1_onlyVOC07_test/'
 VISUAL_THRESHOLD = 0.6
-CUDA = False
+CUDA = True
 VOC_ROOT = VOCroot
 
 parser = argparse.ArgumentParser(description='Single Shot MultiBox Detection')
 parser.add_argument('--trained_model', default=TRAINED_MODEL,
                     type=str, help='Trained state_dict file path to open')
-parser.add_argument('--save_folder', default='eval/', type=str,
+parser.add_argument('--save_folder', default=SAVE_FOLDER, type=str,
                     help='Dir to save results')
 parser.add_argument('--visual_threshold', default=VISUAL_THRESHOLD, type=float,
                     help='Final confidence threshold')

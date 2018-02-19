@@ -6,6 +6,7 @@ from layers import *
 from data import v2
 import os
 
+
 class SSD(nn.Module):
     """Single Shot Multibox Architecture
     The network is composed of a base VGG network followed by the
@@ -42,7 +43,7 @@ class SSD(nn.Module):
         self.conf = nn.ModuleList(head[1])
 
         if phase == 'test':
-            self.softmax = nn.Softmax()
+            self.softmax = nn.Softmax(dim=-1)
             self.detect = Detect(num_classes, 0, 200, 0.01, 0.45)
 
     def forward(self, x):
@@ -96,7 +97,8 @@ class SSD(nn.Module):
         if self.phase == "test":
             output = self.detect(
                 loc.view(loc.size(0), -1, 4),                   # loc preds
-                self.softmax(conf.view(-1, self.num_classes)),  # conf preds
+                self.softmax(conf.view(conf.size(0), -1,
+                    self.num_classes)),                         # conf preds
                 self.priors.type(type(x.data))                  # default boxes
             )
         else:
@@ -159,10 +161,11 @@ def add_extras(cfg, i, batch_norm=False):
         in_channels = v
     return layers
 
+
 def multibox(vgg, extra_layers, cfg, num_classes):
     loc_layers = []
     conf_layers = []
-    vgg_source = [24, -2]
+    vgg_source = [21, -2]
     for k, v in enumerate(vgg_source):
         loc_layers += [nn.Conv2d(vgg[v].out_channels,
                                  cfg[k] * 4, kernel_size=3, padding=1)]
@@ -185,7 +188,6 @@ extras = {
     '300': [256, 'S', 512, 128, 'S', 256, 128, 256, 128, 256],
     '512': [],
 }
-
 mbox = {
     '300': [4, 6, 6, 6, 4, 4],  # number of boxes per feature map location
     '512': [],

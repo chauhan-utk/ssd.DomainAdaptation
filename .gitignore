@@ -104,6 +104,7 @@ dev.ipynb
 .vscode/
 
 # not ready
+run_[a-z]+.sh
 MSCOCO14weights/
 weights/
 RESULTS/

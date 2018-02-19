@@ -49,13 +49,11 @@ from pycocotools.coco import COCO
 # In[5]:
 
 
-COMMON_CLASSES = ('person', 'bicycle', 'car',
-                  'bus', 'train', 'boat',
-                   'bird', 'cat', 'dog',
-                   'horse', 'sheep', 'cow',
-                   'bottle', 'chair', 'airplane',
-                 'dining table', 'potted plant', 'tv',
-                 'motorcycle', 'couch')
+COMMON_CLASSES = ('airplane', 'bicycle', 'bird', 'boat',
+                  'bottle', 'bus', 'car', 'cat',
+                  'chair', 'cow', 'dining table', 'dog',
+                  'horse', 'motorcycle', 'person', 'potted plant',
+                  'sheep', 'couch', 'train', 'tv' )
 
 
 # In[6]:
@@ -69,13 +67,7 @@ class MSCOCODetection(data.Dataset):
         self.transform = transform
         self.target_transform=target_transform
         self.name=dataset_name
-        self.COMMON_CLASSES = ('person', 'bicycle', 'car',
-                  'bus', 'train', 'boat',
-                   'bird', 'cat', 'dog',
-                   'horse', 'sheep', 'cow',
-                   'bottle', 'chair', 'airplane',
-                 'dining table', 'potted plant', 'tv',
-                 'motorcycle', 'couch')
+        self.COMMON_CLASSES = COMMON_CLASSES
         self.coco = COCO(ann_root)
         self.catIds = self.coco.getCatIds(catNms=self.COMMON_CLASSES)
         self.targetLabels = dict(zip(self.catIds,range(len(self.catIds))))
@@ -159,7 +151,7 @@ class MSCOCODetection(data.Dataset):
         annId = self.coco.getAnnIds(imgIds=imgObj['id'],
                                     catIds=self.catIds, iscrowd=None)
         ann = self.coco.loadAnns(annId) #return list of annotations
-        gt = self.target_transform(anno, 1, 1)
+        gt = self.target_transform(ann, 1, 1)
         return imgObj['id'], gt
 
 
@@ -195,10 +187,10 @@ class COCOAnnotationTransform(object):
             bbox = i['bbox']
 
             #bbox format is [xmin, ymin, width, height]
-            bbox[0] = bbox[0] + 1 # 1-index to 0-index
-            bbox[1] = bbox[1] + 1
-            bbox[2] = bbox[2] + bbox[0]
-            bbox[3] = bbox[3] + bbox[1]
+            bbox[0] = bbox[0]
+            bbox[1] = bbox[1]
+            bbox[2] = bbox[2] + bbox[0] if bbox[2]+bbox[0] < width else width-1
+            bbox[3] = bbox[3] + bbox[1] if bbox[3]+bbox[1] < height else height-1
             bbox[0] /= width
             bbox[2] /= width
             bbox[1] /= height
